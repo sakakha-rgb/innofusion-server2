@@ -1,7 +1,5 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI;
-
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -9,6 +7,15 @@ export default async function handler(req, res) {
   
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Check env vars
+  if (!process.env.MONGODB_URI) {
+    return res.status(500).json({ error: 'MONGODB_URI not set' });
+  }
+  
+  if (!process.env.ADMIN_SECRET) {
+    return res.status(500).json({ error: 'ADMIN_SECRET not set' });
+  }
 
   const { secret, count = 1, days = 365 } = req.body;
   
@@ -26,14 +33,14 @@ export default async function handler(req, res) {
     return key;
   };
 
-  const client = new MongoClient(uri);
-  const keys = [];
+  const client = new MongoClient(process.env.MONGODB_URI);
   
   try {
     await client.connect();
     const db = client.db('innofusion');
     const licenses = db.collection('licenses');
     
+    const keys = [];
     for (let i = 0; i < count; i++) {
       let key, exists = true;
       while (exists) {
@@ -54,8 +61,13 @@ export default async function handler(req, res) {
     }
     
     res.json({ success: true, generated: keys.length, keys });
+    
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Database error:', error);
+    res.status(500).json({ 
+      error: 'Database connection failed',
+      details: error.message 
+    });
   } finally {
     await client.close();
   }
