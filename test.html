@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CEP Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #333; color: #fff; }
+        .success { color: #2ed573; }
+        .error { color: #ff4757; }
+    </style>
+</head>
+<body>
+    <h1>iNNO FUSION - CEP Test</h1>
+    <div id="status">Checking...</div>
+    
+    <script src="../CSInterface.js"></script>
+    <script>
+        const status = document.getElementById('status');
+        
+        try {
+            // Test 1: Check if __adobe_cep__ exists
+            if (typeof window.__adobe_cep__ === 'undefined') {
+                throw new Error('Not running in CEP environment');
+            }
+            
+            // Test 2: Create CSInterface
+            const cs = new CSInterface();
+            
+            // Test 3: Get host environment
+            const host = cs.getHostEnvironment();
+            
+            status.innerHTML = `
+                <p class="success">✅ CEP Environment Detected</p>
+                <p>Host App: ${host.appName} ${host.appVersion}</p>
+                <p>Extension ID: ${host.appId}</p>
+            `;
+            
+        } catch (err) {
+            status.innerHTML = `<p class="error">❌ Error: ${err.message}</p>
+                <p>This page must be opened inside Premiere Pro</p>`;
+        }
+    </script>
+</body>
+</html>
